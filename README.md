@@ -6,6 +6,8 @@ Messages will be received via websocket connection to avoid exceeding the limits
 In order to connect this app, you need the output file of the ```Telegram-api-connector``` repository, it's called "file.json" and should replace the existing one in this repository<br /> <br />
 > NOTE THAT THIS WILL ONLY WORK WITH A PERSONAL ACCOUNT, IT'S NOT MEANT TO BE USED WITH TELEGRAM BOTS.
 
+This app will automatically adjust leverage and use the designed amount for each account, place BOTH Take Profits (split in 50/50 of the order quantity), stop loss and move the STOP LOSS to Breakeven once the first Take Profit is filled, as well as adjust the amount of the Stop Loss (only for Binance)
+
 # Usage
 Before running this program, you need to:
 - download this repository: [Telegram API Connector](https://github.com/cambiosdak/Telegram-api-connector)
@@ -22,6 +24,26 @@ This repository should be INSIDE the "botApp" of Telegram API Connector, and it 
 Otherwise application won't be able to authenticate and connect.
 
 ```
+Message structure:
+```
+#BNB/USDT:  BUY
+Entry:  326,0000
+SL:  321,1100
+TP:  334,1500
+TP:  350,4500
+Leverage : 20X
+```
+or 
+```
+#OP/USDT: BUY LIMIT
+Entry:  2,600
+SL:  2,535
+TP:  2,665
+TP:  2,795
+Leverage : 20X
+```
+
+* If you want to process a different signal, you have to modify the function that handels the received message to extract symbol, stop loss, take profits and leverage*
 # License
 
 [MIT](https://opensource.org/license/mit/)
