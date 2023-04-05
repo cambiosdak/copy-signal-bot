@@ -43,7 +43,7 @@ TP:  2,795
 Leverage : 20X
 ```
 
-* If you want to process a different signal, you have to modify the function that handels the received message to extract symbol, stop loss, take profits and leverage*
+* If you want to process a different signal, you have to modify the function that handels the received message to extract symbol, stop loss, take profits and leverage as well as spaces, decimals, if it's using comma or dot for the decimals, etc*
 # License
 
 [MIT](https://opensource.org/license/mit/)
