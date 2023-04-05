@@ -32,7 +32,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 600,
     height: 550,
-    title: "Cesar Bot",
+    title: "Luis Parada Copy Bot",
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
