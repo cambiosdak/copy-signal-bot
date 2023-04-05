@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesar Bot</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-dark pt-1 pb-1" style="background-color: rgb(18, 18, 18);">
+        <div class="container">
+            <ul class="navbar-nav" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Agregar cuentas</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="profile-tab" data-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Eliminar cuentas</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="delete-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Exchange mode</a>
+            </li>
+            </ul>
+            <form class="d-flex">
+            </form>
+        </div>  
+        </nav>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <div class="container">
+                    <H2 style="margin-top: 15px; text-align: center;">Copy trading</H2>
+                    <br>
+                    <div style="margin-left: 25%; width: 300px;">
+                        <input type="radio" id="option1" name="option" value="binance">
+                        <label for="option1">Binance</label>
+                        <input type="radio" id="option2" name="option" value="bybit">
+                        <label for="option2">Bybit</label>
+                        <br>
+                        <label for="">Cantidad en USDT a invertir por cuenta</label>
+                        <input type="text" class="form-control" placeholder="USDT" id="amount">
+                        <label for="">API KEY</label>
+                        <input type="text" class="form-control" placeholder="API KEY" id="apikey">
+                        <label for="">API SECRET</label>
+                        <input type="text" class="form-control" placeholder="API SECRET" id="apisecret">
+                        <br>
+                        <button class="btn btn-success" style="margin-left: 80px;" onclick="saveData()">Agregar Cuenta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-content">
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                <div class="container">
+                    <div style="text-align: center;">
+                        <br>
+                        <select name="" id="exchange" class="form-control" style="text-align: center; width: 300px; margin-left: 25%;">
+                            <option value="" disabled selected hidden>-- Seleccione exchange --</option>
+                            <option value="binance">Binance</option>
+                            <option value="bybit">Bybit</option>
+                        </select>
+                        <label for="channelid" style="margin-left: 7%;">Channel ID</label>
+                        <input type="text" id="channelid" class="form-control" placeholder="Channel ID, ex: -1208554515241" style="width: 300px; margin-left: 25%; text-align: center;" >
+                        <label for="">Ingrese si desea escuchar COMPRA o BUY</label>
+                        <input type="text" id="buy" class="form-control" style="width: 200px; margin-left: 33%; text-align: center;" placeholder="ex: BUY | COMPRA">
+                        <label for="">Ingrese si desea escuchar VENTA o SELL</label>
+                        <input type="text" id="sell" class="form-control" style="width: 200px; margin-left: 33%; text-align: center;" placeholder="ex: SELL | VENTA">
+                        <br>
+                        <input type="checkbox" id="myCheckbox" class="form-check-input"> <label class="form-check-label" for="flexCheckChecked">Breakeven</label>
+                        <br>
+                        <button type="button" class="btn btn-success" id="connect-btn" onclick="event.preventDefault(); listenChannel()">START</button><br><br>
+                        <label for="">Presione START para empezar a escuchar nuevas ordenes</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-content">
+          <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+            <div class="container">
+              <div style="margin-left: 25%; width: 300px;">
+                <h2 style="margin-top: 10px; text-align: center;">Borrar Keys</h2>
+                <br>
+                <label for="apikeydelete">API KEY</label>
+                <input type="text" class="form-control" placeholder="API KEY" id="apikeydelete">
+                <br>
+                <button class="btn btn-success" style="margin-left: 80px;" onclick="deleteApiKey()">Borrar Cuenta</button>
+            </div>
+            </div>
+          </div>
+        </div>
+    <div class="position-fixed bottom-0 end-0 p-3">
+        <div id="toast-connect" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header">
+            <strong class="me-auto" id="toasthead">New Notification!</strong>
+            <small>1 second ago</small>
+            <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close">
+              <span aria-hidden="true"></span>
+            </button>
+            </div><div class="toast-body"></div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+const fs = require('fs')
+const {ipcRenderer} = require('electron')
+
+async function saveData(){
+    let apiKey = document.getElementById("apikey").value
+    let secretkey = document.getElementById("apisecret").value
+    let amount = document.getElementById("amount").value
+    const option1 = document.getElementById('option1'); // Binance
+    const option2 = document.getElementById('option2'); // Bybit
+  
+    if (option1.checked) {
+        addApiKeys(apiKey, secretkey, amount ,'','', '' )
+    } else if (option2.checked) {
+        addApiKeys('', '', '', apiKey, secretkey, amount)
+    } else{
+        let toaster = document.getElementById('toast-connect')
+        toaster.querySelector('.toast-body').innerHTML = `Seleccione si es una API KEY para Binance o Bybit`
+        let newToast = new bootstrap.Toast(toaster)
+        newToast.show()
+    }
+ }
+
+
+ function addApiKeys(binanceApiKey, binanceSecretKey, amountBinance, bybitApiKey, bybitSecretKey, amountBybit) {
+  // read existing data from file
+  let existingData = {};
+  try {
+    existingData = JSON.parse(fs.readFileSync("apiKeys.json"));
+  } catch (err) {
+    console.log("Error reading file:", err);
+  }
+
+  // filter out empty API keys and secret keys
+  const binanceApiKeys = existingData.binance.filter(key => key.apikey !== '' && key.secretkey !== '') || [];
+  const bybitApiKeys = existingData.bybit.filter(key => key.apikey !== '' && key.secretkey !== '') || [];
+
+  // check if API key already exists in binance object
+  const existingBinanceApiKeyIndex = binanceApiKeys.findIndex(key => key.apikey === binanceApiKey);
+  if (existingBinanceApiKeyIndex >= 0) {
+    console.log("API key already exists for Binance. Updating amount...");
+    binanceApiKeys[existingBinanceApiKeyIndex].amount = amountBinance;
+  } else {
+    // add new API keys to binance object if not empty
+    if (binanceApiKey !== '' && binanceSecretKey !== '' && amountBinance !== '') {
+      binanceApiKeys.push({ apikey: binanceApiKey, secretkey: binanceSecretKey, amount: amountBinance});
+    }
+  }
+
+  // check if API key already exists in bybit object
+  const existingBybitApiKeyIndex = bybitApiKeys.findIndex(key => key.apikey === bybitApiKey);
+  if (existingBybitApiKeyIndex >= 0) {
+    console.log("API key already exists for Bybit. Updating amount...");
+    bybitApiKeys[existingBybitApiKeyIndex].amount = amountBybit;
+  } else {
+    // add new API keys to bybit object if not empty
+    if (bybitApiKey !== '' && bybitSecretKey !== '' && amountBybit !== '') {
+      bybitApiKeys.push({ apikey: bybitApiKey, secretkey: bybitSecretKey, amount: amountBybit });
+    }
+  }
+
+  // update the existing data object with the updated arrays
+  existingData.binance = binanceApiKeys;
+  existingData.bybit = bybitApiKeys;
+
+  // write updated data to file
+  try {
+    fs.writeFileSync("apiKeys.json", JSON.stringify(existingData));
+        let toaster = document.getElementById('toast-connect')
+        toaster.querySelector('.toast-body').innerHTML = `Los datos fueron guardados exitosamente!`
+        let newToast = new bootstrap.Toast(toaster)
+        newToast.show()
+  } catch (err) {
+    console.log("Error writing file:", err);
+  }
+}
+
+function deleteApiKey() {
+  // read existing data from file
+  let apikey = document.getElementById("apikeydelete").value
+  let existingData = {};
+  try {
+    existingData = JSON.parse(fs.readFileSync("apiKeys.json"));
+  } catch (err) {
+    console.log("Error reading file:", err);
+  }
+
+  // delete API key from binance object if it exists
+  if (existingData.binance) {
+    existingData.binance = existingData.binance.filter(key => key.apikey !== apikey);
+  }
+
+  // delete API key from bybit object if it exists
+  if (existingData.bybit) {
+    existingData.bybit = existingData.bybit.filter(key => key.apikey !== apikey);
+  }
+
+  // write updated data to file
+  try {
+    fs.writeFileSync("apiKeys.json", JSON.stringify(existingData));
+    console.log("API key deleted successfully.");
+  } catch (err) {
+    console.log("Error writing file:", err);
+  }
+}
+let selectedExchange
+const selectExchange = document.getElementById('exchange');
+selectExchange.addEventListener('change', (event) => {
+    selectedExchange = event.target.value;
+    console.log(selectedExchange); // Outputs the selected option value to the console
+});
+
+let connectTelegram = document.getElementById("connect-btn")
+function listenChannel() {
+    let channelId = document.getElementById("channelid").value
+    let buy = document.getElementById("buy").value
+    let sell = document.getElementById("sell").value
+    const checkbox = document.getElementById("myCheckbox");
+    if (channelId !== '' && buy !== '' && sell !== '' && selectedExchange !== undefined){
+        connectTelegram.disabled = true
+        let control = true
+        if(checkbox.checked){
+          ipcRenderer.send('connect-telegram', {channelId, buy, sell, selectedExchange, control})
+        } else{
+          ipcRenderer.send('connect-telegram', {channelId, buy, sell, selectedExchange})
+
+        }
+    } else {
+        let toaster = document.getElementById('toast-connect')
+        toaster.querySelector('.toast-body').innerHTML = `Los campos no deben de estar vacios`
+        let newToast = new bootstrap.Toast(toaster)
+        newToast.show()
+    }
+}
+
+
+</script>
+<script>
+// Tab Handler
+const tabContainer = document.getElementById('myTab');
+// add an event listener to the tab container element
+tabContainer.addEventListener('click', (event) => {
+  // check if the clicked element is a tab link
+  if (event.target.getAttribute('data-toggle') === 'tab') {
+    // get the href of the clicked link
+    const targetTab = event.target.getAttribute('href');
+    // show the target tab
+    document.querySelectorAll('.tab-pane').forEach((tab) => {
+      if (tab.id === targetTab.slice(1)) {
+        tab.classList.add('show', 'active');
+      } else {
+        tab.classList.remove('show', 'active');
+      }
+    });
+    // mark the clicked link as active
+    document.querySelectorAll('.nav-link').forEach((link) => {
+      if (link === event.target) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+}); 
+</script>
+</html>
